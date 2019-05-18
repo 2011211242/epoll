@@ -2,6 +2,7 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <algorithm>
 
 static int thread_num = 7;
 static std::mutex mtx;
@@ -11,6 +12,7 @@ static int count = 0;
 void client_func() 
 {
     int cnt = count;
+    int s_count = 0;
 
     while(cnt <= CONNECT_NUM)
     {
@@ -45,6 +47,8 @@ void client_func()
         }
 
         close(socketfd);
+
+        s_count = std::max(s_count, atoi(buff));
         //printf("%s recv msg from server: %s, count: %d\n", __FILE__, buff, cnt);
         while( !mtx.try_lock() )
         {
@@ -53,6 +57,7 @@ void client_func()
             mtx.unlock();
         }
     }
+    printf("s_count: %d\n", s_count);
     printf("exit\n");
 }
 
