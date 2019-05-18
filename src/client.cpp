@@ -10,11 +10,9 @@ static int count = 0;
 #define CONNECT_NUM 100000
 void client_func() 
 {
-    mtx.try_lock();
     int cnt = count;
-    mtx.unlock();
 
-    while(cnt <= CONNECT_NUM - THREAD_NUM)
+    while(cnt <= CONNECT_NUM)
     {
         int socketfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -32,7 +30,7 @@ void client_func()
         }
 
         char msg[] = "hello server";
-        if((send(socketfd, msg, strlen(msg), 0)) < 0)
+        if((send(socketfd, msg, strlen(msg), 0)) <= 0)
         {
             fprintf(stderr, "%s send msg to server error %s errno: %d\n", __FILE__, strerror(errno), errno);
         }
@@ -50,7 +48,6 @@ void client_func()
         //printf("%s recv msg from server: %s, count: %d\n", __FILE__, buff, cnt);
         while( !mtx.try_lock() )
         {
-            sleep(1);
             count ++;
             cnt = count;
             mtx.unlock();
