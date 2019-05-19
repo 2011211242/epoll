@@ -9,12 +9,21 @@ static std::mutex mtx;
 static int count = 0;
 #define THREAD_NUM 7
 #define CONNECT_NUM 100000
+
+bool sendall() {
+    mtx.lock();
+    count ++;
+    int cnt = count;
+    mtx.unlock();
+    return cnt > CONNECT_NUM;
+}
+
 void client_func() 
 {
-    int cnt = count;
+    //int cnt = count;
     int s_count = 0;
 
-    while(cnt <= CONNECT_NUM)
+    while(sendall() == false)
     {
         int socketfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -49,13 +58,9 @@ void client_func()
         close(socketfd);
 
         s_count = std::max(s_count, atoi(buff));
+
         //printf("%s recv msg from server: %s, count: %d\n", __FILE__, buff, cnt);
-        while( !mtx.try_lock() )
-        {
-            count ++;
-            cnt = count;
-            mtx.unlock();
-        }
+
     }
     printf("s_count: %d\n", s_count);
     printf("exit\n");
