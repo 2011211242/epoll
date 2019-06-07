@@ -7,26 +7,24 @@
 static int thread_num = 7;
 static std::mutex mtx;
 static int count = 0;
-#define THREAD_NUM 7
+#define THREAD_NUM 1200
 #define CONNECT_NUM 100000
 
 bool sendall() {
     mtx.lock();
     count ++;
     int cnt = count;
+    printf("s_count: %d\n", cnt);
     mtx.unlock();
     return cnt > CONNECT_NUM;
 }
 
 void client_func() 
 {
-    //int cnt = count;
-    int s_count = 0;
-
+    //int s_count = 0;
     while(sendall() == false)
     {
         int socketfd = socket(AF_INET, SOCK_STREAM, 0);
-
         struct sockaddr_in sockaddr;
         memset(&sockaddr, 0, sizeof(sockaddr));
         sockaddr.sin_family = AF_INET;
@@ -40,29 +38,15 @@ void client_func()
             continue;
         }
 
+        sleep(3);
         char msg[] = "hello server";
         if((send(socketfd, msg, strlen(msg), 0)) <= 0)
         {
             fprintf(stderr, "%s send msg to server error %s errno: %d\n", __FILE__, strerror(errno), errno);
         }
-
-        char buff[BUF_SIZE];
-        int n = recv(socketfd, buff, BUF_SIZE, 0);
-
-        if (n <= 0)
-        {
-            buff[n] = '\0';
-            printf("%s recv msg from server: %s\n", __FILE__, buff);
-        }
-
+        //s_count ++;
         close(socketfd);
-
-        s_count = std::max(s_count, atoi(buff));
-
-        //printf("%s recv msg from server: %s, count: %d\n", __FILE__, buff, cnt);
-
     }
-    printf("s_count: %d\n", s_count);
     printf("exit\n");
 }
 
@@ -73,6 +57,7 @@ int main()
     for (int i = 0; i < thread_vec.size(); i++)
     {
         thread_vec[i] = std::thread(client_func);
+        usleep(5000);
     }
 
     for (int i = 0; i < thread_vec.size(); i++)
